@@ -180,13 +180,11 @@ class AlphaVantageAPI:
                         continue
 
                 else:
-                    start_date = datetime.now() - timedelta(days=90)
+                    start_date = datetime.now() - timedelta(days=90) # real 90 days back from today
                     start_date = start_date.strftime('%Y-%m-%d')
-                    df = df.loc[start_date:]
+                    df = df.loc[df.index > start_date]
                     df = df[['4. close']].iloc[::-1]
                     if df.empty:
-                        continue
-                    if len(df) < 80:  # out of 100 days we got from API
                         continue
                     if df['4. close'].nunique() == 1:
                         continue
@@ -259,10 +257,11 @@ class Analysis:
         model = LinearRegression()
         model.fit(X, y)
 
+        plt.style.use('Solarize_Light2')
         plt.figure(figsize=(10,6))
         
-        plt.scatter(X, y, s=10)
-        plt.plot(model.predict(X), color='r')
+        plt.scatter(X, y, s=10, color='#294dba')
+        plt.plot(model.predict(X), color='#d9344f')
         
         plt.xlabel(intervals)
         plt.ylabel('Price')
