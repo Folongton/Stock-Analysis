@@ -43,7 +43,7 @@ class Navigation:
                 print('Timeout! Cannot find Path: ' + path + '. Function: ' + sys._getframe().f_code.co_name)
                 return False
             
-def driver_update_needed(driver):
+    def driver_update_needed(driver):
         browser_version = driver.capabilities['browserVersion']
         driver_version = driver.capabilities['chrome']['chromedriverVersion'].split(' ')[0]
         print('Your Chrome version is : ' + browser_version)
