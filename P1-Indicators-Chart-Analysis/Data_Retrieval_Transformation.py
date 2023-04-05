@@ -12,6 +12,14 @@ from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
+from matplotlib.ticker import FuncFormatter
+plt.style.use('Solarize_Light2')
+
+from ta.volatility import  BollingerBands
+from ta.trend import SMAIndicator, EMAIndicator, WMAIndicator, MACD
+from ta.momentum import RSIIndicator, KAMAIndicator
+from ta.volume import OnBalanceVolumeIndicator
+
 
 class AlphaVantageAPI:
     @staticmethod
@@ -267,3 +275,225 @@ class Analysis:
         plt.ylabel('Price')
         plt.title(f'Linear Correlation of {series.name} with linear regression line')
         plt.show()
+
+class Indicators:
+    @staticmethod
+    def calc_plot_BollingersBands(df, stock_name, window=20, window_dev=2, plot=True, plot_days_back=100):
+        '''
+        Calculates and plots Bollinger Bands for a given stock.
+        Function Calculates Bollinger Bands for all days in the dataframe, but we can specify how many days back we want to plot.
+        IN: df - dataframe with stock data, 
+            window - number of days to calculate Bollinger Bands, 
+            window_dev - number of standard deviations to calculate Bollinger Bands, 
+            plot_days_back - number of days back to plot Bollinger Bands
+        OUT: df with Bollinger Bands and plot
+        '''
+        df = df.sort_index(ascending=True)
+        indicator_bb = BollingerBands(close=df["5. adjusted close"], 
+                                    window=window, 
+                                    window_dev=window_dev)
+        # Add Bollinger Bands features
+        df['bb_bbm'] = indicator_bb.bollinger_mavg()
+        df['bb_bbh'] = indicator_bb.bollinger_hband()
+        df['bb_bbl'] = indicator_bb.bollinger_lband()
+        if plot:
+            fig, ax = plt.subplots(figsize=(15, 7))
+
+            ax.plot(df['5. adjusted close'].iloc[-plot_days_back:], color='#4C72B0', linewidth=2)
+            ax.plot(df['bb_bbh'].iloc[-plot_days_back:], color='#C44E52', linewidth=1, linestyle='--')
+            ax.plot(df['bb_bbl'].iloc[-plot_days_back:], color='#C44E52', linewidth=1, linestyle='--')
+            ax.set_title(f'Bollinger Bands for {stock_name}')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Price')
+            ax.legend(['Adjusted Close Price', 'Bollinger High Band', 'Bollinger Low Band'])
+
+            plt.show()
+
+        return df[['bb_bbm', 'bb_bbh', 'bb_bbl']]
+    
+    @staticmethod
+    def calc_plot_SMA(df, stock_name, window=50, plot=True, plot_days_back=100):
+        '''
+        Calculates and plots Simple Moving Average for a given stock.
+        Function Calculates Simple Moving Average for all days in the dataframe, but we can specify how many days back we want to plot.
+        IN: df - dataframe with stock data, 
+            window - number of days to calculate Simple Moving Average, 
+            plot_days_back - number of days back to plot Simple Moving Average
+        OUT: df with Simple Moving Average and plot
+        '''
+        df = df.sort_index(ascending=True)
+        indicator_sma = SMAIndicator(close=df["5. adjusted close"], window=window)
+        df['sma'] = indicator_sma.sma_indicator()
+        if plot:
+            fig, ax = plt.subplots(figsize=(15, 7))
+
+            ax.plot(df['5. adjusted close'].iloc[-plot_days_back:], color='#4C72B0', linewidth=2)
+            ax.plot(df['sma'].iloc[-plot_days_back:], color='#C44E52', linewidth=1)
+            ax.set_title(f'Simple Moving Average for {stock_name}')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Price')
+            ax.legend(['Adjusted Close Price', 'SMA'])
+
+            plt.show()
+        return df[['sma']]
+    
+    @staticmethod
+    def calc_plot_EMA(df, stock_name, window=50, plot=True, plot_days_back=100):
+        '''
+        Calculates and plots Exponential Moving Average for a given stock.
+        Function Calculates Exponential Moving Average for all days in the dataframe, but we can specify how many days back we want to plot.
+        IN: df - dataframe with stock data, 
+            window - number of days to calculate Exponential Moving Average, 
+            plot_days_back - number of days back to plot Exponential Moving Average
+        OUT: df with Exponential Moving Average and plot
+        '''
+        df = df.sort_index(ascending=True)
+        indicator_ema = EMAIndicator(close=df["5. adjusted close"], window=window)
+        df['ema'] = indicator_ema.ema_indicator()
+        if plot:
+            fig, ax = plt.subplots(figsize=(15, 7))
+
+            ax.plot(df['5. adjusted close'].iloc[-plot_days_back:], color='#4C72B0', linewidth=2)
+            ax.plot(df['ema'].iloc[-plot_days_back:], color='#C44E52', linewidth=1)
+            ax.set_title(f'Exponential Moving Average for {stock_name}')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Price')
+            ax.legend(['Adjusted Close Price', 'EMA'])
+
+            plt.show()
+        return df[['ema']]
+    
+    @staticmethod
+    def calc_plot_WMA(df, stock_name, window=50, plot=True, plot_days_back=100):
+        '''
+        Calculates and plots Weighted Moving Average for a given stock.
+        Function Calculates Weighted Moving Average for all days in the dataframe, but we can specify how many days back we want to plot.
+        IN: df - dataframe with stock data, 
+            window - number of days to calculate Weighted Moving Average, 
+            plot_days_back - number of days back to plot Weighted Moving Average
+        OUT: df with Weighted Moving Average and plot
+        '''
+        df = df.sort_index(ascending=True)
+        indicator_wma = WMAIndicator(close=df["5. adjusted close"], window=window)
+        df['wma'] = indicator_wma.wma()
+        if plot:
+            fig = plt.figure(figsize=(15, 7))
+            ax = fig.add_subplot(111)
+
+            ax.plot(df['5. adjusted close'].iloc[-plot_days_back:], color='#4C72B0', linewidth=2)
+            ax.plot(df['wma'].iloc[-plot_days_back:], color='#C44E52', linewidth=1)
+            ax.set_title(f'Weighted Moving Average for {stock_name}')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Price')
+            ax.legend(['Adjusted Close Price', 'WMA'])
+
+            plt.show()
+
+        return df[['wma']]
+
+    @staticmethod
+    def calc_plot_AMA(df, stock_name, window=50,  pow1=2, pow2=30, plot=True, plot_days_back=100):
+        '''
+        Calculates and plots Arnaud Legoux Moving Average for a given stock.
+        Function Calculates Arnaud Legoux Moving Average for all days in the dataframe, but we can specify how many days back we want to plot.
+        IN: df - dataframe with stock data, 
+            window - number of days to calculate Arnaud Legoux Moving Average, 
+            plot_days_back - number of days back to plot Arnaud Legoux Moving Average
+        OUT: df with Arnaud Legoux Moving Average and plot
+        '''
+        df = df.sort_index(ascending=True)
+        indicator_ama = KAMAIndicator(close=df["5. adjusted close"], window=window, pow1=pow1, pow2=pow2)
+        df['ama'] = indicator_ama.kama()
+        if plot: 
+            fig = plt.figure(figsize=(15,7))
+            ax = fig.add_subplot(111)
+
+            ax.plot(df[['5. adjusted close']].iloc[-plot_days_back:], color='#4C72B0', linewidth=2)
+            ax.plot(df[['ama']].iloc[-plot_days_back:], color='#C44E52', linewidth=1)
+            
+            ax.set_title(f'Kaufman Adaptive Moving Average for {stock_name}')
+            ax.set_xlabel('Date')
+            ax.set_ylabel('Price')
+            ax.legend(['Adjusted Close Price', 'AMA'])
+            
+            plt.show()
+        return df[['ama']]
+    
+    @staticmethod
+    def calc_plot_RSI(df, stock_name, window=14, plot=True, plot_days_back=100):
+        '''
+        Calculates and plots Relative Strength Index for a given stock.
+        Function Calculates Relative Strength Index for all days in the dataframe, but we can specify how many days back we want to plot.
+        IN: df - dataframe with stock data, 
+            window - number of days to calculate Relative Strength Index, 
+            plot_days_back - number of days back to plot Relative Strength Index
+        OUT: df with Relative Strength Index and plot
+        '''
+        df = df.sort_index(ascending=True)
+        indicator_rsi = RSIIndicator(close=df["5. adjusted close"], window=window)
+        df['rsi'] = indicator_rsi.rsi()
+        
+        if plot:
+            fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(15, 5))
+
+            # plot the price
+            ax1.plot(df.iloc[-plot_days_back:].index, df['5. adjusted close'].iloc[-plot_days_back:], color='#4C72B0')
+            ax1.set_title(f'Price {stock_name}')
+            ax1.set_ylabel('Price')
+
+            # plot the RSI
+            ax2.plot(df.iloc[-plot_days_back:].index, df['rsi'].iloc[-plot_days_back:], color='#55A868')
+            ax2.set_title(f'Relative Strength Index {stock_name}')
+            ax2.set_ylabel('RSI')
+
+            ax2.axhline(70, linestyle='--', color='#E83030', linewidth=1)
+            ax2.axhline(30, linestyle='--', color='#E83030', linewidth=1)
+            ax2.set_yticks([30, 70])
+
+            # adjust size of subplots
+            fig.subplots_adjust(hspace=0.15)
+            ax1.set_position([0.1, 0.5, 0.8, 0.5])
+            ax2.set_position([0.1, 0.15, 0.8, 0.27])
+
+            # Label the x-axis
+            ax2.set_xlabel('Date')
+
+            plt.show()
+        return df[['rsi']]
+    
+    @staticmethod
+    def calc_plot_OBV(df, stock_name, plot=True, plot_days_back=100):
+        '''
+        Calculates and plots On Balance Volume for a given stock.
+        Function Calculates On Balance Volume for all days in the dataframe, but we can specify how many days back we want to plot.
+        IN: df - dataframe with stock data, 
+            plot_days_back - number of days back to plot On Balance Volume
+        OUT: df with On Balance Volume and plot
+        '''
+        df = df.sort_index(ascending=True)
+        indicator_obv = OnBalanceVolumeIndicator(close=df["5. adjusted close"], volume=df["6. volume"])
+        df['obv'] = indicator_obv.on_balance_volume()
+        if plot:
+            fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(15, 5))
+
+            # plot the price
+            ax1.plot(df.iloc[-plot_days_back:].index, df['5. adjusted close'].iloc[-plot_days_back:], color='#4C72B0')
+            ax1.set_title(f'Price {stock_name}')
+            ax1.set_ylabel('Price')
+
+            # plot the volume
+            ax2.bar(df.iloc[-plot_days_back:].index, df['6. volume'].iloc[-plot_days_back:], width=0.8, color='#55A868')
+            ax2.set_title(f'On Balance Volume {stock_name}')
+            ax2.set_ylabel('Volume (in millions)')
+            ax2.yaxis.set_major_formatter(FuncFormatter(lambda y, _: '{:.0f}M'.format(y * 1e-6))) 
+
+            # adjust size of subplots
+            fig.subplots_adjust(hspace=0.15)
+            ax1.set_position([0.1, 0.5, 0.8, 0.5])
+            ax2.set_position([0.1, 0.15, 0.8, 0.27])
+
+            # Label the x-axis
+            ax2.set_xlabel('Date')
+            plt.show()
+            
+        return df[['obv']]
