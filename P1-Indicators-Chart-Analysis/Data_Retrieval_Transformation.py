@@ -429,6 +429,7 @@ class Indicators:
             plot_days_back - number of days back to plot Relative Strength Index
         OUT: df with Relative Strength Index and plot
         '''
+        plt.style.use('Solarize_Light2')
         df = df.sort_index(ascending=True)
         indicator_rsi = RSIIndicator(close=df["5. adjusted close"], window=window)
         df['rsi'] = indicator_rsi.rsi()
@@ -437,12 +438,17 @@ class Indicators:
             fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(15, 5))
 
             # plot the price
-            ax1.plot(df.iloc[-plot_days_back:].index, df['5. adjusted close'].iloc[-plot_days_back:], color='#4C72B0')
+            x = df.iloc[-plot_days_back:].index
+            y1 = df['5. adjusted close'].iloc[-plot_days_back:]
+            ax1.fill_between(x, y1, color='#4C72B0', alpha=0.5) 
+            # show only price between min and max price
+            ax1.set_ylim([y1.min()-plot_days_back/100, y1.max()+plot_days_back/100])
             ax1.set_title(f'Price {stock_name}')
             ax1.set_ylabel('Price')
 
             # plot the RSI
-            ax2.plot(df.iloc[-plot_days_back:].index, df['rsi'].iloc[-plot_days_back:], color='#55A868')
+            y2 = df['rsi'].iloc[-plot_days_back:]
+            ax2.plot(x, y2, color='#55A868')
             ax2.set_title(f'Relative Strength Index {stock_name}')
             ax2.set_ylabel('RSI')
 
