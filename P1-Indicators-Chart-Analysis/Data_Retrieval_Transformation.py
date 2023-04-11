@@ -43,7 +43,7 @@ class AlphaVantageAPI:
         IN: API Parameters, directory to save data to
         OUT: None - saves data to directory'''
         for ticker in ticker_list:
-            if os.path.exists(os.path.join(directory, f'{ticker}-daily-100days.csv')):
+            if os.path.exists(os.path.join(directory, f'{ticker}-daily-{full_or_compact}.csv')):
                 pass
             elif os.path.exists(os.path.join(directory, f'{ticker}.json')):
                 pass
@@ -53,7 +53,7 @@ class AlphaVantageAPI:
                 try:
                     df = pd.DataFrame(data['Time Series (Daily)']).T
                     df.index.name = 'Date'
-                    df.to_csv(os.path.join(directory, f'{ticker}-daily-100days.csv'))
+                    df.to_csv(os.path.join(directory, f'{ticker}-daily-{full_or_compact}.csv'))
                     time.sleep(sleep_time)
                     print(f'{ticker_list.index(ticker)/len(ticker_list)*100:.2f}%')
                 except KeyError:
@@ -278,7 +278,7 @@ class Analysis:
 
 class Indicators:
     @staticmethod
-    def calc_plot_BollingersBands(df, stock_name, window=20, window_dev=2, plot=True, plot_days_back=100):
+    def calc_plot_BollingersBands(df, stock_name, col="5. adjusted close", window=20, window_dev=2, plot=True, plot_days_back=100):
         '''
         Calculates and plots Bollinger Bands for a given stock.
         Function Calculates Bollinger Bands for all days in the dataframe, but we can specify how many days back we want to plot.
@@ -289,7 +289,7 @@ class Indicators:
         OUT: df with Bollinger Bands and plot
         '''
         df = df.sort_index(ascending=True)
-        indicator_bb = BollingerBands(close=df["5. adjusted close"], 
+        indicator_bb = BollingerBands(close=df[col], 
                                     window=window, 
                                     window_dev=window_dev)
         # Add Bollinger Bands features
@@ -299,7 +299,7 @@ class Indicators:
         if plot:
             fig, ax = plt.subplots(figsize=(15, 7))
 
-            ax.plot(df['5. adjusted close'].iloc[-plot_days_back:], color='#4C72B0', linewidth=2)
+            ax.plot(df[col].iloc[-plot_days_back:], color='#4C72B0', linewidth=2)
             ax.plot(df['bb_bbh'].iloc[-plot_days_back:], color='#C44E52', linewidth=1, linestyle='--')
             ax.plot(df['bb_bbl'].iloc[-plot_days_back:], color='#C44E52', linewidth=1, linestyle='--')
             ax.set_title(f'Bollinger Bands for {stock_name}')
@@ -392,7 +392,7 @@ class Indicators:
         return df[['wma']]
 
     @staticmethod
-    def calc_plot_AMA(df, stock_name, window=50,  pow1=2, pow2=30, plot=True, plot_days_back=100):
+    def calc_plot_AMA(df, stock_name, col='5. adjusted close',  window=50,  pow1=2, pow2=30, plot=True, plot_days_back=100):
         '''
         Calculates and plots Arnaud Legoux Moving Average for a given stock.
         Function Calculates Arnaud Legoux Moving Average for all days in the dataframe, but we can specify how many days back we want to plot.
@@ -402,13 +402,13 @@ class Indicators:
         OUT: df with Arnaud Legoux Moving Average and plot
         '''
         df = df.sort_index(ascending=True)
-        indicator_ama = KAMAIndicator(close=df["5. adjusted close"], window=window, pow1=pow1, pow2=pow2)
+        indicator_ama = KAMAIndicator(close=df[col], window=window, pow1=pow1, pow2=pow2)
         df['ama'] = indicator_ama.kama()
         if plot: 
             fig = plt.figure(figsize=(15,7))
             ax = fig.add_subplot(111)
 
-            ax.plot(df[['5. adjusted close']].iloc[-plot_days_back:], color='#4C72B0', linewidth=2)
+            ax.plot(df[[col]].iloc[-plot_days_back:], color='#4C72B0', linewidth=2)
             ax.plot(df[['ama']].iloc[-plot_days_back:], color='#C44E52', linewidth=1)
             
             ax.set_title(f'Kaufman Adaptive Moving Average for {stock_name}')
@@ -420,7 +420,7 @@ class Indicators:
         return df[['ama']]
     
     @staticmethod
-    def calc_plot_RSI(df, stock_name, window=14, plot=True, plot_days_back=100):
+    def calc_plot_RSI(df, stock_name, col='5. adjusted close', window=14, plot=True, plot_days_back=100):
         '''
         Calculates and plots Relative Strength Index for a given stock.
         Function Calculates Relative Strength Index for all days in the dataframe, but we can specify how many days back we want to plot.
@@ -431,7 +431,7 @@ class Indicators:
         '''
         plt.style.use('Solarize_Light2')
         df = df.sort_index(ascending=True)
-        indicator_rsi = RSIIndicator(close=df["5. adjusted close"], window=window)
+        indicator_rsi = RSIIndicator(close=df[col], window=window)
         df['rsi'] = indicator_rsi.rsi()
         
         if plot:
@@ -439,7 +439,7 @@ class Indicators:
 
             # plot the price
             x = df.iloc[-plot_days_back:].index
-            y1 = df['5. adjusted close'].iloc[-plot_days_back:]
+            y1 = df[col].iloc[-plot_days_back:]
             ax1.fill_between(x, y1, color='#4C72B0', alpha=0.5) 
             # show only price between min and max price
             ax1.set_ylim([y1.min()-plot_days_back/100, y1.max()+plot_days_back/100])
@@ -468,7 +468,7 @@ class Indicators:
         return df[['rsi']]
     
     @staticmethod
-    def calc_plot_OBV(df, stock_name, plot=True, plot_days_back=100):
+    def calc_plot_OBV(df, stock_name, close_col = "5. adjusted close", volume_col='6. volume', plot=True, plot_days_back=100):
         '''
         Calculates and plots On Balance Volume for a given stock.
         Function Calculates On Balance Volume for all days in the dataframe, but we can specify how many days back we want to plot.
@@ -477,20 +477,25 @@ class Indicators:
         OUT: df with On Balance Volume and plot
         '''
         df = df.sort_index(ascending=True)
-        indicator_obv = OnBalanceVolumeIndicator(close=df["5. adjusted close"], volume=df["6. volume"])
+        indicator_obv = OnBalanceVolumeIndicator(close=df[close_col], volume=df[volume_col])
         df['obv'] = indicator_obv.on_balance_volume()
         if plot:
             fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(15, 5))
 
             # plot the price
-            ax1.plot(df.iloc[-plot_days_back:].index, df['5. adjusted close'].iloc[-plot_days_back:], color='#4C72B0')
+            x = df.iloc[-plot_days_back:].index
+            y1 = df[close_col].iloc[-plot_days_back:]
+            ax1.fill_between(x, y1, color='#4C72B0', alpha=0.5)
+
+            # show only price between min and max price
+            ax1.set_ylim([y1.min()-plot_days_back/100, y1.max()+plot_days_back/100])
             ax1.set_title(f'Price {stock_name}')
             ax1.set_ylabel('Price')
 
             # plot the volume
-            ax2.bar(df.iloc[-plot_days_back:].index, df['6. volume'].iloc[-plot_days_back:], width=0.8, color='#55A868')
+            ax2.bar(df.iloc[-plot_days_back:].index, df[volume_col].iloc[-plot_days_back:], width=0.8, color='#55A868')
             ax2.set_title(f'On Balance Volume {stock_name}')
-            ax2.set_ylabel('Volume (in millions)')
+            ax2.set_ylabel('OBV Volume (in millions)')
             ax2.yaxis.set_major_formatter(FuncFormatter(lambda y, _: '{:.0f}M'.format(y * 1e-6))) 
 
             # adjust size of subplots
@@ -503,3 +508,26 @@ class Indicators:
             plt.show()
             
         return df[['obv']]
+    
+class AV_Plots:
+    @staticmethod
+    def calc_prct_gain(series):
+        return series.apply(lambda x: (x - series.iloc[0])/series.iloc[0])
+    
+    @staticmethod
+    def plot_prct_gain(stocks, from_date, to_date):
+        plt.figure(figsize=(15, 5))
+        for stock in stocks:
+            df = pd.read_csv(rf'..\P1-Indicators-Chart-Analysis\Data\Daily\{stock}-daily-full.csv', index_col=0, parse_dates=True)
+            df.index.rename('Date', inplace=True)
+            df = df.copy()[::-1]
+            df = df.loc[from_date:to_date].copy(deep=True)
+
+            AV_Plots.calc_prct_gain(df['5. adjusted close']).plot()
+
+        plt.gca().yaxis.set_major_formatter(mticker.PercentFormatter(1.0))
+        plt.gca().yaxis.tick_right()
+        plt.legend(stocks)
+        plt.title('Percent Gain')
+        plt.legend(stocks)
+        plt.show()  
