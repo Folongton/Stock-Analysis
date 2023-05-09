@@ -13,13 +13,17 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
 from matplotlib.ticker import FuncFormatter
-plt.style.use('Solarize_Light2')
+
 
 from ta.volatility import  BollingerBands
 from ta.trend import SMAIndicator, EMAIndicator, WMAIndicator, MACD
 from ta.momentum import RSIIndicator, KAMAIndicator
 from ta.volume import OnBalanceVolumeIndicator
 
+plt.rcParams['figure.figsize'] = (15, 5)
+plt.style.use('Solarize_Light2')
+
+DATA_DIR = r'D:\Study 2018 and later\Mignimind Bootcamp\Code\Stock Analysis Data'
 
 class AlphaVantageAPI:
     @staticmethod
@@ -518,7 +522,7 @@ class AV_Plots:
     def plot_prct_gain(stocks, from_date, to_date):
         plt.figure(figsize=(15, 5))
         for stock in stocks:
-            df = pd.read_csv(rf'..\P1-Indicators-Chart-Analysis\Data\Daily\{stock}-daily-full.csv', index_col=0, parse_dates=True)
+            df = pd.read_csv(os.path.join(DATA_DIR, rf'Daily\{stock}-daily-full.csv'), index_col=0, parse_dates=True)
             df.index.rename('Date', inplace=True)
             df = df.copy()[::-1]
             df = df.loc[from_date:to_date].copy(deep=True)
